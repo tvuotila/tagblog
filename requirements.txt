@@ -1,5 +1,7 @@
 Flask==0.9
+Flask-SQLAlchemy==0.16
 Jinja2==2.7
 MarkupSafe==0.18
+SQLAlchemy==0.8.1
 Werkzeug==0.8.3
 waitress==0.8.5
