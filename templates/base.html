@@ -28,16 +28,6 @@
   </head>
 
   <body>
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-info">
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
-            {{ message }}
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %} 
     {% block navbar %}
     <div class="navbar navbar-inverse navbar-fixed-top">
       <div class="navbar-inner">
@@ -61,9 +51,11 @@
             {% if current_user.is_authenticated() %}
             <div class="navbar-form pull-right">Hello {{current_user.username }} <a href="{{ url_for('logout') }}">Logout</a></div>
             {% else %}
-            <form class="navbar-form pull-right" action="{{ url_for('login') }}">
-              <input class="span2" type="text" placeholder="Email">
-              <input class="span2" type="password" placeholder="Password">
+            <form class="navbar-form pull-right" action="{{ url_for('login') }}" method="post">
+              {{ loginform.csrf_token }}
+              {{ loginform.username(placeholder="username") }}
+              {{ loginform.password(placeholder="password") }}
+              <input type="hidden" name="next" value="{{ request.path }}"/>
               <button type="submit" class="btn">Sign in</button>
             </form>
             {% endif %}
@@ -73,6 +65,16 @@
     </div>
     {% endblock %}
     <div class="container">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-info">
+              <button type="button" class="close" data-dismiss="alert">&times;</button>
+              {{ message }}
+           </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
       {% block body %}
       <!-- Main hero unit for a primary marketing message or call to action -->
       <div>
@@ -120,19 +122,8 @@
     <!-- Le javascript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap-transition.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap-alert.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap-modal.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap-dropdown.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap-scrollspy.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap-tab.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap-tooltip.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap-popover.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap-button.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap-collapse.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap-carousel.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap-typeahead.js') }}"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
 
   </body>
 </html>

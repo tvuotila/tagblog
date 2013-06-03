@@ -1,8 +1,11 @@
-from flask import Flask, render_template, Markup, abort, redirect, url_for, request
+from flask import Flask, render_template, Markup, abort, redirect, url_for, request, flash
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import (LoginManager, current_user, login_required,
                             login_user, logout_user, UserMixin, AnonymousUser)
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask.ext.wtf import Form
+from wtforms.validators import DataRequired, Length
+from wtforms import TextField, PasswordField
 
 app = Flask(__name__)
 app.config.from_pyfile('settings.py')
@@ -38,6 +41,10 @@ class User(db.Model):
 
     def get_id(self):
         return unicode(self.id)
+
+    # Currently we only have admins.
+    def is_admin(self):
+        return True
 
 # Helper table for tag-blogpost relationship
 tags = db.Table('tags',
@@ -80,17 +87,36 @@ db.create_all()
 @login_manager.user_loader
 def load_user(userid):
     try:
-        return User.query.filter_by(id=int(userid))
+        return User.query.filter_by(id=int(userid)).first()
     except Exception, e:
         return None
-    
+
+class LoginForm(Form):
+    username = TextField(label=u'username', description=u'username', validators=[DataRequired(), Length(max=80)])
+    password = PasswordField(label=u'password', description=u'password', validators=[DataRequired()])
+
+# Helper method for redirecting
+# Tries to find 'next' info and redirect there.
+# If next info not found, will redirect to index page. 
+def redirect_next_or_index():
+    try:
+        if request.values['next'] == None:
+            app.logger.debug('No next field')
+            return redirect(url_for('index'))
+        else:
+            app.logger.debug('next field is '+request.values['next'])
+            return redirect(request.values['next'])
+    except Exception, e:
+        app.logger.warning(str(e))
+    # fall-back
+    return redirect(url_for('index'))
 
 # Index listing all blogposts
 @app.route('/<page>')
 @app.route('/')
 def index(page=0):
     posts = Blogpost.query.limit(20).offset(page*20).all()
-    return render_template('index.html', posts=posts)
+    return render_template('index.html', posts=posts, loginform=LoginForm())
 
 # Page for searching posts
 @app.route('/search')
@@ -106,18 +132,41 @@ def edittags():
 # Page for viewing the post
 @app.route('/post/<id>')
 def post(id):
-    pass
+    try:
+        post = Blogpost.query.filter_by(id=id).first()
+        if post:
+            return render_template('post.html',post=post, loginform=LoginForm())
+    except Exception, e:
+        app.logger.warning(str(e))
+    return redirect_next_or_index()
+    
 
-@app.route('/login')
+@app.route('/login', methods=('GET', 'POST'))
 def login():
-    print  request.args.get("next")
-    pass
+    # fail-fast if not trying to login
+    if not request.form:
+        return redirect(url_for('index'))
+    # get login data and validate it
+    form = LoginForm(request.form)
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user==None or not user.check_password(form.password.data):
+            app.logger.debug('user not found or invalid password. User is ' + (user.username if user else '<None>'))
+            flash('invalid credentials')
+            return redirect(url_for('index'))
+        else:
+            login_user(user)
+            app.logger.debug('logged in user: '+user.username)
+    for error in form.errors:
+        flash(error)
+    return redirect_next_or_index()
+
+    
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
-    flash("Logget out.")
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
