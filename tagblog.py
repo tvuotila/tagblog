@@ -27,6 +27,18 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.pw_hash, password)
 
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return unicode(self.id)
+
 # Helper table for tag-blogpost relationship
 tags = db.Table('tags',
     db.Column('tag_id', db.Integer, db.ForeignKey('tag.id')),
@@ -67,7 +79,11 @@ db.create_all()
 
 @login_manager.user_loader
 def load_user(userid):
-    return User.get(userid)
+    try:
+        return User.query.filter_by(id=int(userid))
+    except Exception, e:
+        return None
+    
 
 # Index listing all blogposts
 @app.route('/<page>')
