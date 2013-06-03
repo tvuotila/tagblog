@@ -61,8 +61,8 @@ class Tag(db.Model):
     def __init__(self, name):
         self.name = name
 
-    def __repr__(self):
-        return '<Tag: ' + self.name + '>'
+    def __str__(self):
+        return '<Tag: ' + str(self.name) + '>'
 
 
 # Blog post consisting of title, body and tags.
@@ -116,7 +116,9 @@ def redirect_next_or_index():
 @app.route('/')
 def index(page=0):
     posts = Blogpost.query.limit(20).offset(page*20).all()
-    return render_template('index.html', posts=posts, loginform=LoginForm())
+    # How many pages of posts we have
+    pages = int(math.cell(float(Blogpost.query.count())/20))
+    return render_template('index.html', posts=posts, loginform=LoginForm(), pages=pages, page=page)
 
 # Page for searching posts
 @app.route('/search')
