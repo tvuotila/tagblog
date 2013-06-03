@@ -37,7 +37,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="brand" href="#">Tagblog</a>
+          <a class="brand" href="{{ url_for('index') }}">Tagblog</a>
           <div class="nav-collapse collapse">
             <ul class="nav">
               <li id="home" class="active"><a href="{{ url_for('index') }}">Home</a></li>
@@ -49,7 +49,7 @@
               </form>
             </ul>
             {% if current_user.is_authenticated() %}
-            <div class="navbar-form pull-right">Hello {{current_user.username }} <a href="{{ url_for('logout') }}">Logout</a></div>
+            <div class="pull-right navbar-text">Hello {{current_user.username }} <a href="{{ url_for('logout') }}">Logout</a></div>
             {% else %}
             <form class="navbar-form pull-right" action="{{ url_for('login') }}" method="post">
               {{ loginform.csrf_token }}
@@ -75,48 +75,12 @@
           {% endfor %}
         {% endif %}
       {% endwith %}
-      {% block body %}
-      <!-- Main hero unit for a primary marketing message or call to action -->
-      <div>
-        {% for post in posts %}
-        <div class="row">
-        <h2>{{ post.title }}</h2>
-        <p>{{ post.body|truncate(120) }}</p>
-        <p>Tags: 
-          {% for tag in post.tags %}
-          <a>{{ tag.name }}</a>
-          {% endfor %}
-        </ul>
-        <p><a href="{{ url_for('post', id=post.id) }}" class="btn">Read more &raquo;</a></p>
-        </div>
-        {% endfor %}
-      </div>
-
-      <!-- Example row of columns -->
-      <div class="row">
-        <div class="span4">
-          <h2>Heading</h2>
-          <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-          <p><a class="btn" href="#">View details &raquo;</a></p>
-        </div>
-        <div class="span4">
-          <h2>Heading</h2>
-          <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-          <p><a class="btn" href="#">View details &raquo;</a></p>
-       </div>
-        <div class="span4">
-          <h2>Heading</h2>
-          <p>Donec sed odio dui. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Vestibulum id ligula porta felis euismod semper. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
-          <p><a class="btn" href="#">View details &raquo;</a></p>
-        </div>
-      </div>
-
+      {% block body %}{% endblock %}
       <hr>
 
       <footer>
         <p>&copy; Company 2013</p>
       </footer>
-      {% endblock %}
     </div> <!-- /container -->
 
     <!-- Le javascript
@@ -124,6 +88,7 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+    {% block script %}{% endblock %}
 
   </body>
 </html>
