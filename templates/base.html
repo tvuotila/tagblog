@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Tagblog, a blog with tags</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Example project using Flask and Bootstrap 2.0">
+    <meta name="author" content="Tero Vuotila">
+
+    <!-- Le styles -->
+    <link href="{{ url_for('static', filename='css/bootstrap.css') }}" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+    </style>
+    <link href="{{ url_for('static', filename='css/bootstrap-responsive.css') }}" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="../assets/js/html5shiv.js"></script>
+    <![endif]-->
+
+    <!-- Fav and touch icons -->
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    {% block head %}{% endblock %}
+  </head>
+
+  <body>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-info">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %} 
+    {% block navbar %}
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="brand" href="#">Tagblog</a>
+          <div class="nav-collapse collapse">
+            <ul class="nav">
+              <li id="home" class="active"><a href="{{ url_for('index') }}">Home</a></li>
+              {% if current_user.is_authenticated() and current_user.is_admin() %}
+              <li id="tagedit"><a href="{{ url_for('edittags') }}">Edit tags</a></li>
+              {% endif %}
+              <form style="padding-left: 10px;" class="navbar-search pull-left" action="{{ url_for('search') }}">
+                <input class="search-query" type="text" placeholder="Search">
+              </form>
+            </ul>
+            {% if current_user.is_authenticated() %}
+            <div class="navbar-form pull-right">Hello {{current_user.username }} <a href="{{ url_for('logout') }}">Logout</a></div>
+            {% else %}
+            <form class="navbar-form pull-right" action="{{ url_for('login') }}">
+              <input class="span2" type="text" placeholder="Email">
+              <input class="span2" type="password" placeholder="Password">
+              <button type="submit" class="btn">Sign in</button>
+            </form>
+            {% endif %}
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+    {% endblock %}
+    <div class="container">
+      {% block body %}
+      <!-- Main hero unit for a primary marketing message or call to action -->
+      <div>
+        {% for post in posts %}
+        <div class="row">
+        <h2>{{ post.title }}</h2>
+        <p>{{ post.body|truncate(120) }}</p>
+        <p>Tags: 
+          {% for tag in post.tags %}
+          <a>{{ tag.name }}</a>
+          {% endfor %}
+        </ul>
+        <p><a href="{{ url_for('post', id=post.id) }}" class="btn">Read more &raquo;</a></p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Example row of columns -->
+      <div class="row">
+        <div class="span4">
+          <h2>Heading</h2>
+          <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+          <p><a class="btn" href="#">View details &raquo;</a></p>
+        </div>
+        <div class="span4">
+          <h2>Heading</h2>
+          <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+          <p><a class="btn" href="#">View details &raquo;</a></p>
+       </div>
+        <div class="span4">
+          <h2>Heading</h2>
+          <p>Donec sed odio dui. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Vestibulum id ligula porta felis euismod semper. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
+          <p><a class="btn" href="#">View details &raquo;</a></p>
+        </div>
+      </div>
+
+      <hr>
+
+      <footer>
+        <p>&copy; Company 2013</p>
+      </footer>
+      {% endblock %}
+    </div> <!-- /container -->
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-transition.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-alert.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-modal.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-dropdown.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-scrollspy.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-tab.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-tooltip.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-popover.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-button.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-collapse.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-carousel.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-typeahead.js') }}"></script>
+
+  </body>
+</html>
