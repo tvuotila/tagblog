@@ -103,8 +103,8 @@ class BlogpostForm(Form):
     body = TextAreaField(label=u'Body', description=u'body of the post')
     tags = SelectMultipleField(label=u'Tags', description=u'tags of the post', coerce=int)
 
-    def __init__(self, post=None, **kwargs):
-        super(BlogpostForm, self).__init__(**kwargs)
+    def __init__(self, formdata=None, obj=None, prefix='', post=None, **kwargs):
+        super(BlogpostForm, self).__init__(formdata=formdata, obj=obj, prefix=prefix, **kwargs)
         self.post_init()
         if post:
             self.id.data = post.id
@@ -136,16 +136,21 @@ def redirect_next_or_index():
 @app.route('/<page>')
 @app.route('/')
 def index(page=1):
+    page = max(int(page), 1)
     addpostform = BlogpostForm()
-    posts = Blogpost.query.limit(20).offset((int(page)-1)*20).all()
+    posts = Blogpost.query.limit(10).offset((page-1)*10).all()
     # How many pages of posts we have
-    pages = int(math.ceil(float(Blogpost.query.count())/20))
-    return render_template('index.html', posts=posts, pages=pages, page=int(page), loginform=LoginForm(), addpostform=addpostform)
+    pages = int(math.ceil(float(Blogpost.query.count())/10))
+    return render_template('index.html', posts=posts, pages=pages, page=page, loginform=LoginForm(), addpostform=addpostform)
 
 # Page for searching posts
 @app.route('/search')
 def search():
-    pass
+    str = request.values['query'].replace('/','//').replace('%','/%').replace('_','/_')
+    query1 = Blogpost.query.filter(Blogpost.title.like('%'+str+'%'))
+    query2 = Blogpost.query.filter(Blogpost.body.like('%'+str+'%'))
+    results = query1.union(query2).all()
+    return None
 
 # Page for editing tags
 @app.route('/edittags')
@@ -178,23 +183,26 @@ def addpost():
 @login_required
 def editpost():
     try:
-        addpostform = BlogpostForm(request.form)
-        if addpostform.validate_on_submit():
-            post = Blogpost.get(addpostform.id.data)
+        editpostform = BlogpostForm(request.form)
+        editpostform.post_init()
+        if editpostform.validate_on_submit():
+            post = Blogpost.query.get(editpostform.id.data)
             if not post:
                 flash('Blogpost not found')
                 redirect_next_or_index()
-            post.title = addpostform.title.data
-            post.body = addpostform.body.data
-            tags = addpostform.tags.data
+            post.title = editpostform.title.data
+            post.body = editpostform.body.data
+            tags = editpostform.tags.data
             if tags: 
                 tags = Tag.query.filter(Tag.id.in_(tags)).all()
             post.tags = tags
             db.session.add(post)
             db.session.commit()
             return redirect(url_for('post', id=post.id))
+        else:
+            print editpostform.errors
     except Exception, e:
-        app.logger.warning(str(e))
+        raise
     flash('Internal error')
     return redirect_next_or_index()
 
@@ -205,11 +213,10 @@ def post(id):
         post = Blogpost.query.filter_by(id=id).first()
         if post:
             addpostform = BlogpostForm()
-            editpostform = BlogpostForm(post)
-            print dir(addpostform.title)
+            editpostform = BlogpostForm(post=post)
             return render_template('post.html', post=post, id=id, loginform=LoginForm(), addpostform=addpostform, editpostform=editpostform)
     except Exception, e:
-        raise #app.logger.warning(str(e))
+        raise app.logger.warning(str(e))
     return redirect_next_or_index()
     
 

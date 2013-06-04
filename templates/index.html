@@ -13,6 +13,7 @@
         <p><a href="{{ url_for('post', id=post.id) }}" class="btn">Read more &raquo;</a></p>
         </div>
         {% endfor %}
+        {% if pages > 1 %}
         <div class="pagination">
           <ul>
             {% if page <= 1 %}<li class="disabled"><a>Prev</a></li>
@@ -25,5 +26,6 @@
             {% else %}<li><a href="{{ url_for('index', page=page+1) }}">Next</a></li>{% endif %}
           </ul>
         </div>
+        {% endif %}
       </div>
 {% endblock %}
