@@ -7,7 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask.ext.wtf import Form
 from wtforms.ext.sqlalchemy.orm import model_form
 from wtforms.validators import DataRequired, Length
-from wtforms import TextField, PasswordField
+from wtforms import TextField, PasswordField, TextAreaField, SelectMultipleField
 
 app = Flask(__name__)
 app.config.from_pyfile('settings.py')
@@ -97,6 +97,15 @@ class LoginForm(Form):
     username = TextField(label=u'username', description=u'username', validators=[DataRequired(), Length(max=80)])
     password = PasswordField(label=u'password', description=u'password', validators=[DataRequired()])
 
+class BlogpostForm(Form):
+    title = TextField(label=u'Title', description=u'title of the post', validators=[Length(max=80)])
+    body = TextAreaField(label=u'Body', description=u'body of the post')
+    tags = SelectMultipleField(label=u'Tags', description=u'tags of the post', coerce=int)
+
+    # used to init tags with correct values
+    def post_init(self):
+        self.tags.choices = [(t.id, t.name) for t in Tag.query.order_by('name').all()]
+
 # Helper method for redirecting
 # Tries to find 'next' info and redirect there.
 # If next info not found, will redirect to index page. 
@@ -117,10 +126,12 @@ def redirect_next_or_index():
 @app.route('/<page>')
 @app.route('/')
 def index(page=1):
+    addpostform = BlogpostForm()
+    addpostform.post_init()
     posts = Blogpost.query.limit(20).offset((int(page)-1)*20).all()
     # How many pages of posts we have
     pages = int(math.ceil(float(Blogpost.query.count())/20))
-    return render_template('index.html', posts=posts, loginform=LoginForm(), pages=pages, page=int(page))
+    return render_template('index.html', posts=posts, pages=pages, page=int(page), loginform=LoginForm(), addpostform=addpostform)
 
 # Page for searching posts
 @app.route('/search')
@@ -133,13 +144,38 @@ def search():
 def edittags():
     pass
 
+# Page for adding new post
+@app.route('/addpost', methods=('GET', 'POST'))
+@login_required
+def addpost():
+    try:
+        addpostform = BlogpostForm(request.form)
+        addpostform.post_init()
+        if addpostform.validate_on_submit():
+            title = addpostform.title.data
+            body = addpostform.body.data
+            tags = addpostform.tags.data
+            if tags: 
+                tags = Tag.query.filter(Tag.id.in_(tags)).all()
+            post = Blogpost(title, body, tags)
+            db.session.add(post)
+            db.session.commit()
+            return redirect(url_for('post', id=post.id))
+    except Exception, e:
+        app.logger.warning(str(e))
+    return redirect_next_or_index()
+
+
+
 # Page for viewing the post
 @app.route('/post/<id>')
 def post(id):
     try:
         post = Blogpost.query.filter_by(id=id).first()
         if post:
-            return render_template('post.html', post=post, loginform=LoginForm())
+            addpostform = BlogpostForm()
+            addpostform.post_init()
+            return render_template('post.html', post=post, loginform=LoginForm(), addpostform=addpostform)
     except Exception, e:
         app.logger.warning(str(e))
     return redirect_next_or_index()
@@ -171,7 +207,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('index'))
+    return redirect_next_or_index()
 
 if __name__ == '__main__':
     app.run(debug=True)

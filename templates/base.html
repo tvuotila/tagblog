@@ -43,13 +43,14 @@
               <li id="home" class="active"><a href="{{ url_for('index') }}">Home</a></li>
               {% if current_user.is_authenticated() and current_user.is_admin() %}
               <li id="tagedit"><a href="{{ url_for('edittags') }}">Edit tags</a></li>
+              <li id="addpost"><a>Add new post</a></li>
               {% endif %}
               <form style="padding-left: 10px;" class="navbar-search pull-left" action="{{ url_for('search') }}">
                 <input class="search-query" type="text" placeholder="Search">
               </form>
             </ul>
             {% if current_user.is_authenticated() %}
-            <div class="pull-right navbar-text">Hello {{current_user.username }} <a href="{{ url_for('logout') }}">Logout</a></div>
+            <div class="pull-right navbar-text">Hello {{current_user.username }} <a href="{{ url_for('logout', next=request.path) }}">Logout</a></div>
             {% else %}
             <form class="navbar-form pull-right" action="{{ url_for('login') }}" method="post">
               {{ loginform.csrf_token }}
@@ -75,6 +76,28 @@
           {% endfor %}
         {% endif %}
       {% endwith %}
+      <div id="addpostmodal" class="modal fade hide">
+        <form method="post" action="{{  url_for('addpost') }}">
+            <input type="hidden" name="next" value="{{ request.path }}"/>
+            {{ addpostform.csrf_token }}
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h3>Add new blogpost</h3>
+            </div>
+            <div class="modal-body">
+                {{ addpostform.title.label }}
+                {{ addpostform.title }}
+                {{ addpostform.body.label }}
+                {{ addpostform.body }}
+                {{ addpostform.tags.label }}
+                {{ addpostform.tags }}
+            </div>
+            <div class="modal-footer">
+                <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+      </div> 
       {% block body %}{% endblock %}
       <hr>
 
@@ -88,6 +111,11 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+    <script type="text/javascript">
+    $('#addpost').click(function() {
+                    $('#addpostmodal').modal();
+                  });
+    </script>
     {% block script %}{% endblock %}
 
   </body>
