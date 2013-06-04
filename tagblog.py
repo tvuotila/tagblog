@@ -1,9 +1,11 @@
+import math
 from flask import Flask, render_template, Markup, abort, redirect, url_for, request, flash
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import (LoginManager, current_user, login_required,
                             login_user, logout_user, UserMixin, AnonymousUser)
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask.ext.wtf import Form
+from wtforms.ext.sqlalchemy.orm import model_form
 from wtforms.validators import DataRequired, Length
 from wtforms import TextField, PasswordField
 
@@ -114,11 +116,11 @@ def redirect_next_or_index():
 # Index listing all blogposts
 @app.route('/<page>')
 @app.route('/')
-def index(page=0):
-    posts = Blogpost.query.limit(20).offset(page*20).all()
+def index(page=1):
+    posts = Blogpost.query.limit(20).offset((int(page)-1)*20).all()
     # How many pages of posts we have
-    pages = int(math.cell(float(Blogpost.query.count())/20))
-    return render_template('index.html', posts=posts, loginform=LoginForm(), pages=pages, page=page)
+    pages = int(math.ceil(float(Blogpost.query.count())/20))
+    return render_template('index.html', posts=posts, loginform=LoginForm(), pages=pages, page=int(page))
 
 # Page for searching posts
 @app.route('/search')
@@ -137,7 +139,7 @@ def post(id):
     try:
         post = Blogpost.query.filter_by(id=id).first()
         if post:
-            return render_template('post.html',post=post, loginform=LoginForm())
+            return render_template('post.html', post=post, loginform=LoginForm())
     except Exception, e:
         app.logger.warning(str(e))
     return redirect_next_or_index()
