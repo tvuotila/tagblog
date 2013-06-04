@@ -7,7 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask.ext.wtf import Form
 from wtforms.ext.sqlalchemy.orm import model_form
 from wtforms.validators import DataRequired, Length
-from wtforms import TextField, PasswordField, TextAreaField, SelectMultipleField
+from wtforms import TextField, PasswordField, TextAreaField, SelectMultipleField, HiddenField
 
 app = Flask(__name__)
 app.config.from_pyfile('settings.py')
@@ -98,9 +98,19 @@ class LoginForm(Form):
     password = PasswordField(label=u'password', description=u'password', validators=[DataRequired()])
 
 class BlogpostForm(Form):
+    id = HiddenField()
     title = TextField(label=u'Title', description=u'title of the post', validators=[Length(max=80)])
     body = TextAreaField(label=u'Body', description=u'body of the post')
     tags = SelectMultipleField(label=u'Tags', description=u'tags of the post', coerce=int)
+
+    def __init__(self, post=None, **kwargs):
+        super(BlogpostForm, self).__init__(**kwargs)
+        self.post_init()
+        if post:
+            self.id.data = post.id
+            self.title.data = post.title
+            self.body.data = post.body
+            self.tags.data = [t.id for t in post.tags]
 
     # used to init tags with correct values
     def post_init(self):
@@ -127,7 +137,6 @@ def redirect_next_or_index():
 @app.route('/')
 def index(page=1):
     addpostform = BlogpostForm()
-    addpostform.post_init()
     posts = Blogpost.query.limit(20).offset((int(page)-1)*20).all()
     # How many pages of posts we have
     pages = int(math.ceil(float(Blogpost.query.count())/20))
@@ -150,7 +159,6 @@ def edittags():
 def addpost():
     try:
         addpostform = BlogpostForm(request.form)
-        addpostform.post_init()
         if addpostform.validate_on_submit():
             title = addpostform.title.data
             body = addpostform.body.data
@@ -163,9 +171,32 @@ def addpost():
             return redirect(url_for('post', id=post.id))
     except Exception, e:
         app.logger.warning(str(e))
+    flash('Internal error')
     return redirect_next_or_index()
 
-
+@app.route('/editpost', methods=('GET', 'POST'))
+@login_required
+def editpost():
+    try:
+        addpostform = BlogpostForm(request.form)
+        if addpostform.validate_on_submit():
+            post = Blogpost.get(addpostform.id.data)
+            if not post:
+                flash('Blogpost not found')
+                redirect_next_or_index()
+            post.title = addpostform.title.data
+            post.body = addpostform.body.data
+            tags = addpostform.tags.data
+            if tags: 
+                tags = Tag.query.filter(Tag.id.in_(tags)).all()
+            post.tags = tags
+            db.session.add(post)
+            db.session.commit()
+            return redirect(url_for('post', id=post.id))
+    except Exception, e:
+        app.logger.warning(str(e))
+    flash('Internal error')
+    return redirect_next_or_index()
 
 # Page for viewing the post
 @app.route('/post/<id>')
@@ -174,10 +205,11 @@ def post(id):
         post = Blogpost.query.filter_by(id=id).first()
         if post:
             addpostform = BlogpostForm()
-            addpostform.post_init()
-            return render_template('post.html', post=post, loginform=LoginForm(), addpostform=addpostform)
+            editpostform = BlogpostForm(post)
+            print dir(addpostform.title)
+            return render_template('post.html', post=post, id=id, loginform=LoginForm(), addpostform=addpostform, editpostform=editpostform)
     except Exception, e:
-        app.logger.warning(str(e))
+        raise #app.logger.warning(str(e))
     return redirect_next_or_index()
     
 

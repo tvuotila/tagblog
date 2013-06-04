@@ -43,7 +43,7 @@
               <li id="home" class="active"><a href="{{ url_for('index') }}">Home</a></li>
               {% if current_user.is_authenticated() and current_user.is_admin() %}
               <li id="tagedit"><a href="{{ url_for('edittags') }}">Edit tags</a></li>
-              <li id="addpost"><a>Add new post</a></li>
+              <li id="addpost"><a href="#">Add new post</a></li>
               {% endif %}
               <form style="padding-left: 10px;" class="navbar-search pull-left" action="{{ url_for('search') }}">
                 <input class="search-query" type="text" placeholder="Search">
