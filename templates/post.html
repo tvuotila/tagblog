@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block body %}
+    <div class="row" style="background-color: #FFD7BC; margin: 35px; padding: 10px; -moz-border-radius: 10px; border-radius: 10px;">
+        <h2>{{ post.title }}</h2>
+        <p>{{ post.body }}</p>
+        <p>Tags: 
+          {% for tag in post.tags %}
+          <a>{{ tag.name }}</a>
+          {% endfor %}
+        </ul>
+    </div>
+{% endblock %}
