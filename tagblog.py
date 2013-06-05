@@ -7,7 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask.ext.wtf import Form
 from wtforms.ext.sqlalchemy.orm import model_form
 from wtforms.validators import DataRequired, Length
-from wtforms import TextField, PasswordField, TextAreaField, SelectMultipleField, HiddenField
+from wtforms import TextField, PasswordField, TextAreaField, SelectMultipleField, HiddenField, FieldList
 
 app = Flask(__name__)
 app.config.from_pyfile('settings.py')
@@ -116,6 +116,9 @@ class BlogpostForm(Form):
     def post_init(self):
         self.tags.choices = [(t.id, t.name) for t in Tag.query.order_by('name').all()]
 
+class TagForm(Form):
+    tags = FieldList(TextField('Tag', validators=[DataRequired()]), min_entries=4)
+
 # Helper method for redirecting
 # Tries to find 'next' info and redirect there.
 # If next info not found, will redirect to index page. 
@@ -137,26 +140,39 @@ def redirect_next_or_index():
 @app.route('/')
 def index(page=1):
     page = max(int(page), 1)
-    addpostform = BlogpostForm()
     posts = Blogpost.query.limit(10).offset((page-1)*10).all()
     # How many pages of posts we have
     pages = int(math.ceil(float(Blogpost.query.count())/10))
-    return render_template('index.html', posts=posts, pages=pages, page=page, loginform=LoginForm(), addpostform=addpostform)
+    return render_template('index.html', posts=posts, pages=pages, page=page, loginform=LoginForm(), addpostform=BlogpostForm())
 
 # Page for searching posts
 @app.route('/search')
 def search():
-    str = request.values['query'].replace('/','//').replace('%','/%').replace('_','/_')
-    query1 = Blogpost.query.filter(Blogpost.title.like('%'+str+'%'))
-    query2 = Blogpost.query.filter(Blogpost.body.like('%'+str+'%'))
-    results = query1.union(query2).all()
-    return None
+    queryString = request.values['query'].replace('/','//').replace('%','/%').replace('_','/_')
+    # Try to get page from GET or POST data.
+    # Fall back to 1 if fails or <1
+    page = 1
+    try:
+        page = int(request.values['page'])
+    except:
+        pass
+    page = max(page, 1)
+    terms = queryString.split()
+    query = Blogpost.query
+    for term in terms:
+        query1 = Blogpost.query.filter(Blogpost.title.like('%'+term+'%'))
+        query2 = Blogpost.query.filter(Blogpost.body.like('%'+term+'%'))
+        query = query.intersect(query1.union(query2))
+    posts = query.limit(10).offset((page-1)*10).all()
+    pages = int(math.ceil(float(query.count())/10))
+    return render_template('search.html', posts=posts, pages=pages, page=page, loginform=LoginForm(), addpostform=BlogpostForm())
 
 # Page for editing tags
 @app.route('/edittags')
 @login_required
 def edittags():
-    pass
+    tagForm = TagForm()
+    return render_template('edittags.html', tagform=tagForm, loginform=LoginForm(), addpostform=BlogpostForm())
 
 # Page for adding new post
 @app.route('/addpost', methods=('GET', 'POST'))
@@ -212,11 +228,10 @@ def post(id):
     try:
         post = Blogpost.query.filter_by(id=id).first()
         if post:
-            addpostform = BlogpostForm()
             editpostform = BlogpostForm(post=post)
-            return render_template('post.html', post=post, id=id, loginform=LoginForm(), addpostform=addpostform, editpostform=editpostform)
+            return render_template('post.html', post=post, id=id, editpostform=editpostform, loginform=LoginForm(), addpostform=BlogpostForm())
     except Exception, e:
-        raise app.logger.warning(str(e))
+        app.logger.warning(str(e))
     return redirect_next_or_index()
     
 
