@@ -31,7 +31,9 @@
           <a>{{ tag.name }}</a>
           {% endfor %}
         </ul>
+        {% if current_user.is_authenticated() and current_user.is_admin() %}
         <p><a id="editpost" class="btn">Edit</a></p>
+        {% endif %}
     </div>
 {% endblock %}
 {% block script %}
