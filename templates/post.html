@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block body %}
     <div id="editpostmodal" class="modal fade hide">
-        <form method="post" action="{{  url_for('editpost') }}">
+        <form method="post" action="{{ url_for('editpost') }}">
             <input type="hidden" name="next" value="{{ request.path }}"/>
             {{ editpostform.csrf_token }}
             {{ editpostform.id }}
@@ -32,7 +32,10 @@
           {% endfor %}
         </ul>
         {% if current_user.is_authenticated() and current_user.is_admin() %}
-        <p><a id="editpost" class="btn">Edit</a></p>
+        <p>
+            <a id="editpost" class="btn">Edit</a>
+            <a id="deletepost" class="btn" href="{{ url_for('deletepost', postid=id) }}">Delete</a>
+        </p>
         {% endif %}
     </div>
 {% endblock %}

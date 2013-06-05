@@ -288,6 +288,15 @@ def editpost():
     flash('Internal error')
     return redirect_next_or_index()
 
+@app.route('/deletepost', methods=('GET', 'POST'))
+@login_required
+def deletepost():
+    id = request.values['postid']
+    Blogpost.query.filter_by(id=id).delete()
+    db.session.commit()
+    flash('Deleted the post')
+    return redirect_next_or_index()
+
 # Page for viewing the post
 @app.route('/post/<id>')
 def post(id):
