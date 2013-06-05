@@ -199,7 +199,6 @@ def edittags():
         tags = []
         for entry in tagForm.tags.entries:
             tags.append((entry.data['id'], entry.data['name']))
-        print tags
         # First lets remove all empty lines.
         tags[:] = [tag for tag in tags if not (tag[1] == u'')]
         # New entries have no id
@@ -208,7 +207,6 @@ def edittags():
         tags[:] = [tag for tag in tags if not tag in newEntries]
         # Lets remove tags that were not returned
         ids = [int(tag[0]) for tag in tags]
-        print ids
         if ids:
             #  Delete dosen't work right without this
             db.session.commit()
