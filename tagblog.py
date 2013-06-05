@@ -1,4 +1,5 @@
 import math
+import os
 from flask import Flask, render_template, Markup, abort, redirect, url_for, request, flash
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import (LoginManager, current_user, login_required,
@@ -12,7 +13,7 @@ from wtforms import TextField, PasswordField, TextAreaField, SelectMultipleField
 
 app = Flask(__name__)
 app.config.from_pyfile('settings.py')
-app.secret_key = '\xcaI\x9f\r+\xd4\xae4<\x1f\x87!r\xe3\xc9\xf2Jh+\xc2\x95\x17\x9e\x98'
+app.secret_key = os.environ['SECRET_KEY']
 db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
