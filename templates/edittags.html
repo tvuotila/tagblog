@@ -1,12 +1,21 @@
 {% extends 'base.html' %}
 {% block body %}
-<form>
-    {{ tagform.crfs_token }}
-    {% for tag in tagform.tags %}
+<h1>Add, edit and remove tags</h1>
+<form method="post" action="{{  url_for('edittags') }}">
+    {{ tagform.csrf_token }}
+    {% for tagtuple in tagform.tags %}
         <div id="input{{ loop.index }}" class="clonedInput">
-            {{ tag }}
+        {% for tag in tagtuple %}
+                {{ tag }}
+        {% endfor %}
         </div>
     {% endfor %}
+    <div>
+        <input class="btn" type="button" id="btnAdd" value="Add new tag" />
+        <input class="btn" type="button" id="btnDel" value="Remove last tag" />
+        <button type="submit" class="btn btn-primary">Save</button>
+        <br/>Empty tags are automatically removed.
+    </div>
 </form>
 {% endblock %}
 {% block script %}
@@ -19,17 +28,16 @@ $('#btnAdd').click(function() {
     var newElem = $('#input' + num).clone().attr('id', 'input' + newNum);
 
     // manipulate the name/id values of the input inside the new element
-    newElem.children(':first').attr('id', 'name' + newNum).attr('name', 'name' + newNum);
+    newElem.children(':first').attr('id', 'tags-' + num + "-csrf_token").attr('name', 'tags-' + num + '-csrf_token');
+    newElem.children(':first ~').attr('id', 'tags-' + num + "-id").attr('name', 'tags-' + num + '-id').attr('value', '');
+    newElem.children(':first ~ ~').attr('id', 'tags-' + num + "-name").attr('name', 'tags-' + num + '-name').val('');
 
     // insert the new element after the last "duplicatable" input field
     $('#input' + num).after(newElem);
 
     // enable the "remove" button
-    $('#btnDel').attr('disabled','');
+    $('#btnDel').attr('disabled', false);
 
-    // business rule: you can only add 5 names
-    if (newNum == 5)
-        $('#btnAdd').attr('disabled','disabled');
 });
 
 $('#btnDel').click(function() {
@@ -37,15 +45,17 @@ $('#btnDel').click(function() {
     $('#input' + num).remove();        // remove the last element
 
     // enable the "add" button
-    $('#btnAdd').attr('disabled','');
+    $('#btnAdd').prop('disabled', false);
 
     // if only one element remains, disable the "remove" button
     if (num-1 == 1)
-        $('#btnDel').attr('disabled','disabled');
+        $('#btnDel').prop('disabled', true);
 });
 
-
-$('#btnDel').attr('disabled','disabled');
+if ($('.clonedInput').length == 1)
+    $('#btnDel').prop('disabled', true);
+else
+    $('#btnDel').prop('disabled', false);
 
 </script>
 {% endblock %}

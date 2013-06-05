@@ -5,9 +5,10 @@ from flask.ext.login import (LoginManager, current_user, login_required,
                             login_user, logout_user, UserMixin, AnonymousUser)
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask.ext.wtf import Form
+from sqlalchemy.exc import IntegrityError
 from wtforms.ext.sqlalchemy.orm import model_form
 from wtforms.validators import DataRequired, Length
-from wtforms import TextField, PasswordField, TextAreaField, SelectMultipleField, HiddenField, FieldList
+from wtforms import TextField, PasswordField, TextAreaField, SelectMultipleField, HiddenField, FieldList, FormField
 
 app = Flask(__name__)
 app.config.from_pyfile('settings.py')
@@ -49,10 +50,10 @@ class User(db.Model):
         return True
 
 # Helper table for tag-blogpost relationship
-tags = db.Table('tags',
+tagsTable = db.Table('tags',
     db.Column('tag_id', db.Integer, db.ForeignKey('tag.id')),
     db.Column('blogpost_id', db.Integer, db.ForeignKey('blogpost.id'))
-)
+    )
 
 # Tag
 class Tag(db.Model):
@@ -72,7 +73,7 @@ class Blogpost(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(80))
     body = db.Column(db.Text)
-    tags = db.relationship('Tag', secondary=tags, 
+    tags = db.relationship('Tag', secondary=tagsTable, 
         backref=db.backref('blogposts', lazy='dynamic'))
 
     def __init__(self, title, body, tags=None):
@@ -116,8 +117,12 @@ class BlogpostForm(Form):
     def post_init(self):
         self.tags.choices = [(t.id, t.name) for t in Tag.query.order_by('name').all()]
 
+class SingleTagForm(Form):
+    id = HiddenField()
+    name = TextField('Tag', validators=[DataRequired()])
+
 class TagForm(Form):
-    tags = FieldList(TextField('Tag', validators=[DataRequired()]), min_entries=4)
+    tags = FieldList(FormField(SingleTagForm))
 
 # Helper method for redirecting
 # Tries to find 'next' info and redirect there.
@@ -158,6 +163,11 @@ def search():
         pass
     page = max(page, 1)
     terms = queryString.split()
+    # Maximum amount of terms is 11 or things will crash.
+    if len(terms) > 11:
+        flash('Too many search terms. 11 is maximum.')
+        return render_template('search.html', posts=[], pages=0, page=page, loginform=LoginForm(), addpostform=BlogpostForm()) 
+    # I will leave database optimization to database engine.
     query = Blogpost.query
     for term in terms:
         query1 = Blogpost.query.filter(Blogpost.title.like('%'+term+'%'))
@@ -168,11 +178,63 @@ def search():
     return render_template('search.html', posts=posts, pages=pages, page=page, loginform=LoginForm(), addpostform=BlogpostForm())
 
 # Page for editing tags
-@app.route('/edittags')
+@app.route('/edittags', methods=('GET', 'POST'))
 @login_required
 def edittags():
-    tagForm = TagForm()
-    return render_template('edittags.html', tagform=tagForm, loginform=LoginForm(), addpostform=BlogpostForm())
+    if request.method == 'GET':
+        tagForm = TagForm()
+        tags = Tag.query.all()
+        for tag in tags:
+            tagForm.tags.append_entry(data={'id':tag.id, 'name':tag.name})
+        # We need at leat one entry
+        if len(tags) < 1:
+            tagForm.tags.append_entry()
+        return render_template('edittags.html', tagform=tagForm, loginform=LoginForm(), addpostform=BlogpostForm())
+    else:
+        tagForm = TagForm(request.form)
+        tags = []
+        for entry in tagForm.tags.entries:
+            tags.append((entry.data['id'], entry.data['name']))
+        print tags
+        # First lets remove all empty lines.
+        tags[:] = [tag for tag in tags if not (tag[1] == u'')]
+        # New entries have no id
+        newEntries = [tag for tag in tags if (tag[0] == u'')]
+        # We have them in separate list so lets remove them from first
+        tags[:] = [tag for tag in tags if not tag in newEntries]
+        # Lets remove tags that were not returned
+        ids = [int(tag[0]) for tag in tags]
+        print ids
+        if ids:
+            #  Delete dosen't work right without this
+            db.session.commit()
+            app.logger.debug('Removing '+str(Tag.query.filter(Tag.id.notin_(ids)).delete(synchronize_session=False))+' tags')
+        # db.session.commit() # When sure, we delete
+        # We need to still update old tags.
+        # Lets first load all tags to memory so that no extra sql queries are needed.
+        # After all we edit every tag.
+        tmpTags = Tag.query.all()
+        for tag in tags:
+            try:
+                updatedTag = Tag.query.get(int(tag[0]))
+                updatedTag.name = tag[1]
+                db.session.add(updatedTag)
+            except:
+                app.logger.warning('Error retrieving tag: '+tag[0])
+        # Add new entries
+        for entry in newEntries:
+            tag = Tag(entry[1])
+            db.session.add(tag)
+        # Commit changes
+        try:
+            db.session.commit()
+        except IntegrityError, e:
+            flash('Got integrity error. Sure you didn\'t give same name to two or more tags?')
+            # Should do this automatically. Can't be too sure.
+            # Let's rollback changes
+            db.session.rollback()
+        return redirect(url_for('edittags'))
+
 
 # Page for adding new post
 @app.route('/addpost', methods=('GET', 'POST'))
@@ -183,7 +245,7 @@ def addpost():
         if addpostform.validate_on_submit():
             title = addpostform.title.data
             body = addpostform.body.data
-            tags = addpostform.tags.data
+            tags = [int(tag) for tag in addpostform.tags.data]
             if tags: 
                 tags = Tag.query.filter(Tag.id.in_(tags)).all()
             post = Blogpost(title, body, tags)
@@ -216,7 +278,7 @@ def editpost():
             db.session.commit()
             return redirect(url_for('post', id=post.id))
         else:
-            print editpostform.errors
+            app.logger.warning(str(editpostform.errors))
     except Exception, e:
         raise
     flash('Internal error')
