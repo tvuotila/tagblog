@@ -2,18 +2,20 @@
 {% block body %}
       <div>
         <h1>Search results</h1>
-        Page {{ page }} of {{ pages }}
+        {% if pages >= 1 %}Page {{ page }} of {{ pages }}{% endif %}
         {% for post in posts %}
         <div class="row" style="background-color: #FFD7BC; margin: 35px; padding: 10px; -moz-border-radius: 10px; border-radius: 10px;">
         <h2>{{ post.title }}</h2>
         <p>{{ post.body|truncate(120) }}</p>
         <p>Tags: 
           {% for tag in post.tags %}
-          <a>{{ tag.name }}</a>
+            <a>{{ tag.name }}</a>
           {% endfor %}
         </ul>
         <p><a href="{{ url_for('post', id=post.id) }}" class="btn">Read more &raquo;</a></p>
         </div>
+        {% else %}
+          <h2>No posts found</h2>
         {% endfor %}
         {% if pages > 1 %}
         <div class="pagination">
