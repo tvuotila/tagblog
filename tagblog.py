@@ -153,7 +153,11 @@ def index(page=1):
 # Page for searching posts
 @app.route('/search')
 def search():
-    queryString = request.values['query'].replace('/','//').replace('%','/%').replace('_','/_')
+    try:
+        queryString = request.values['query'].replace('/','//').replace('%','/%').replace('_','/_')
+    except KeyError:
+        flash('Search query not present')
+        return redirect_next_or_index()
     # Try to get page from GET or POST data.
     # Fall back to 1 if fails or <1
     page = 1
@@ -228,6 +232,7 @@ def edittags():
         # Commit changes
         try:
             db.session.commit()
+            flash('Tags saved')
         except IntegrityError, e:
             flash('Got integrity error. Sure you didn\'t give same name to two or more tags?')
             # Should do this automatically. Can't be too sure.
