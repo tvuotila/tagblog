@@ -45,9 +45,11 @@
               <li id="tagedit" {% if request.path == url_for('edittags') %}class="active"{% endif %}><a href="{{ url_for('edittags') }}">Edit tags</a></li>
               <li id="addpost"><a href="#">Add new post</a></li>
               {% endif %}
-              <form style="padding-left: 10px;" class="navbar-search pull-left" action="{{ url_for('search') }}">
-                <input name="query" class="search-query" type="text" placeholder="Search">
-              </form>
+              <li>
+                <form style="padding-left: 10px;" class="navbar-search pull-left" action="{{ url_for('search') }}">
+                  <input name="query" class="search-query" type="text" placeholder="Search">
+                </form>
+              </li>
             </ul>
             {% if current_user.is_authenticated() %}
             <div class="pull-right navbar-text">Hello {{current_user.username }} <a href="{{ url_for('logout', next=request.path) }}">Logout</a></div>
