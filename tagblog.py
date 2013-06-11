@@ -12,7 +12,9 @@ from wtforms.validators import DataRequired, Length
 from wtforms import TextField, PasswordField, TextAreaField, SelectMultipleField, HiddenField, FieldList, FormField
 
 app = Flask(__name__)
-app.config.from_pyfile('settings.py')
+# Get setting from file specified in enviroment variables or default file.
+# This way we can change settings while testing.
+app.config.from_pyfile(os.environ.get('TAGBLOG_SETTINGS_FILE', 'settings.py'))
 app.secret_key = os.environ['SECRET_KEY']
 db = SQLAlchemy(app)
 login_manager = LoginManager()
