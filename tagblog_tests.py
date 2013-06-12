@@ -163,7 +163,7 @@ class TagblogTestCase(unittest.TestCase):
 
     def test_blogpost_edit(self):
         # Let's add some posts
-        first = tagblog.Tag('first')
+        first = tagblog.Tag('First')
         second = tagblog.Tag('second')
         third = tagblog.Tag('third')
         not_first = tagblog.Tag('not first')
@@ -178,7 +178,7 @@ class TagblogTestCase(unittest.TestCase):
         assert 'title1' in rv.data
         assert 'body1' in rv.data
         assert 'Tags:' in rv.data
-        assert 'first' in rv.data
+        assert 'First' in rv.data
         assert 'title2' in rv.data
         assert 'body2' in rv.data
         assert 'second' in rv.data
@@ -188,7 +188,69 @@ class TagblogTestCase(unittest.TestCase):
         assert 'third' in rv.data
         assert 'last' in rv.data
         # Let's edit the first one
+        # unauthorized edit
         tagblog.db.session.add(post1)
+        self.app.post('/editpost',data={
+                            'id':post1.id,
+                            'title':'editedtItle1',
+                            'body':'editedbOdy1'})
+        # Things should not change
+        rv = self.app.get('/')
+        assert 'title1' in rv.data
+        assert 'body1' in rv.data
+        assert 'Tags:' in rv.data
+        assert 'First' in rv.data
+        assert 'title2' in rv.data
+        assert 'body2' in rv.data
+        assert 'second' in rv.data
+        assert 'not first' in rv.data
+        assert 'title3' in rv.data
+        assert 'body3' in rv.data
+        assert 'third' in rv.data
+        assert 'last' in rv.data
+        assert 'editedtItle1' not in rv.data
+        assert 'editedbOdy1' not in rv.data
+        #Authorized edit
+        self.login('admin', 'default')        
+        self.app.post('/editpost',data={
+                            'id':post1.id,
+                            'title':'editedtItle1',
+                            'body':'editedbOdy1'})
+        rv = self.app.get('/')
+        assert 'editedtItle1' in rv.data
+        assert 'editedbOdy1' in rv.data
+        assert 'Tags:' in rv.data
+        assert 'title2' in rv.data
+        assert 'body2' in rv.data
+        assert 'second' in rv.data
+        assert 'not first' in rv.data
+        assert 'title3' in rv.data
+        assert 'body3' in rv.data
+        assert 'third' in rv.data
+        assert 'last' in rv.data
+        assert 'title1' not in rv.data
+        assert 'body1' not in rv.data
+        # This should show for admin
+        assert 'First' in rv.data
+        # Non admin view
+        self.logout()
+        rv = self.app.get('/')
+        assert 'editedtItle1' in rv.data
+        assert 'editedbOdy1' in rv.data
+        assert 'Tags:' in rv.data
+        assert 'title2' in rv.data
+        assert 'body2' in rv.data
+        assert 'second' in rv.data
+        assert 'not first' in rv.data
+        assert 'title3' in rv.data
+        assert 'body3' in rv.data
+        assert 'third' in rv.data
+        assert 'last' in rv.data
+        assert 'title1' not in rv.data
+        assert 'body1' not in rv.data
+        assert 'First' not in rv.data
+       
+
 
 
 
