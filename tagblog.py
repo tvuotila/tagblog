@@ -268,7 +268,6 @@ def addpost():
 def editpost():
     try:
         editpostform = BlogpostForm(request.form)
-        editpostform.post_init()
         if editpostform.validate_on_submit():
             post = Blogpost.query.get(editpostform.id.data)
             if not post:
