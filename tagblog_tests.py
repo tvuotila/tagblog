@@ -55,7 +55,7 @@ class TagblogTestCase(unittest.TestCase):
         # Authorized login
         rv = self.login('admin', 'default')
         # In
-        assert 'Hello admin' in rv.data
+        assert 'Hello, admin' in rv.data
         assert 'Logout' in rv.data
         # Not in
         assert 'Sign in' not in rv.data
