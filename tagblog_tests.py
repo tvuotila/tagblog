@@ -7,6 +7,7 @@ import tempfile
 from flask.ext.sqlalchemy import SQLAlchemy
 
 class TagblogTestCase(unittest.TestCase):
+    """Test tagblog library/site"""
 
     def setUp(self):
         self.app = tagblog.app.test_client()
@@ -26,7 +27,7 @@ class TagblogTestCase(unittest.TestCase):
     def login(self, username, password):
         return self.app.post('/login', data=dict(
                             username=username,
-                            password=password#, csrf_token=index.data['csrf_token']
+                            password=password
                             ), follow_redirects=True)
 
     def logout(self):
@@ -51,6 +52,7 @@ class TagblogTestCase(unittest.TestCase):
         assert 'Tags:' not in rv.data
 
     def test_login_logout(self):
+        # Authorized login
         rv = self.login('admin', 'default')
         # In
         assert 'Hello admin' in rv.data
@@ -58,6 +60,7 @@ class TagblogTestCase(unittest.TestCase):
         # Not in
         assert 'Sign in' not in rv.data
 
+        # Logging out
         rv = self.logout()
         # In
         assert 'Sign in' in rv.data
@@ -65,6 +68,8 @@ class TagblogTestCase(unittest.TestCase):
         assert 'Hello' not in rv.data
         assert 'Logout' not in rv.data
 
+        # Un-authorized login
+        # Wrong username
         rv = self.login('adminx', 'default')
         # In
         assert 'invalid credentials' in rv.data
@@ -73,6 +78,8 @@ class TagblogTestCase(unittest.TestCase):
         assert 'Hello' not in rv.data
         assert 'Logout' not in rv.data
 
+        # Un-authorized login
+        # Wrong password
         rv = self.login('admin', 'defaultx')
         # In
         assert 'invalid credentials' in rv.data
@@ -108,7 +115,7 @@ class TagblogTestCase(unittest.TestCase):
                             'tags-0-name':'anothertestingtag'})
         assert tagblog.Tag.query.count() == 2
         assert tagblog.Tag.query.filter_by(name='testingtag2').count() == 1
-        assert tagblog.Tag.query.filter_by(name='anothertestingtag').count() == 1
+        assert (tagblog.Tag.query.filter_by(name='anothertestingtag').count()   == 1)
 
     def test_blogpost_add(self):
         # First there is no posts.
@@ -249,14 +256,6 @@ class TagblogTestCase(unittest.TestCase):
         assert 'title1' not in rv.data
         assert 'body1' not in rv.data
         assert 'First' not in rv.data
-       
-
-
-
-
-
-
-
 
 
 if __name__ == '__main__':
