@@ -147,21 +147,21 @@ def load_user(userid):
 class LoginForm(Form):
     """Form for logging in a user."""
     username = TextField(label=u'username', description=u'username', 
-                        validators=[DataRequired(), Length(max=80)])
+                         validators=[DataRequired(), Length(max=80)])
     password = PasswordField(label=u'password', description=u'password', 
-                        validators=[DataRequired()])
+                             validators=[DataRequired()])
 
 class BlogpostForm(Form):
     """Form for inputing blog post info."""
     id = HiddenField()
     title = TextField(label=u'Title', description=u'title of the post', 
-                        validators=[Length(max=80)])
+                      validators=[Length(max=80)])
     body = TextAreaField(label=u'Body', description=u'body of the post')
     tags = SelectMultipleField(label=u'Tags', description=u'tags of the post',
-                        coerce=int)
+                               coerce=int)
 
     def __init__(self, formdata=None, obj=None, 
-                prefix='', post=None, **kwargs):
+                 prefix='', post=None, **kwargs):
         """Create a new form.
 
         Keyword arguments:
@@ -315,8 +315,8 @@ def edittags():
             db.session.commit()
             app.logger.debug('Removing '+
                 str(
-                    Tag.query.filter(
-                        Tag.id.notin_(ids)).delete(synchronize_session=False))
+                    Tag.query.filter(Tag.id.notin_(ids))
+                    .delete(synchronize_session=False))
                 +' tags')
         # db.session.commit() # When sure, we delete
         # We need to still update old tags.
@@ -341,7 +341,7 @@ def edittags():
             flash('Tags saved')
         except IntegrityError, e:
             flash('Got integrity error. \
-                Sure you didn\'t give same name to two or more tags?')
+                   Sure you didn\'t give same name to two or more tags?')
             # Should do this automatically. Can't be too sure.
             # Let's rollback changes
             db.session.rollback()
@@ -424,7 +424,11 @@ def post(id):
         post = Blogpost.query.filter_by(id=id).first()
         if post:
             editpostform = BlogpostForm(post=post)
-            return render_template('post.html', post=post, id=id, editpostform=editpostform, loginform=LoginForm(), addpostform=BlogpostForm())
+            return render_template('post.html', 
+                                    post=post, id=id, 
+                                    editpostform=editpostform, 
+                                    loginform=LoginForm(), 
+                                    addpostform=BlogpostForm())
     except Exception, e:
         app.logger.warning(str(e))
     return redirect_next_or_index()
@@ -440,7 +444,8 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user==None or not user.check_password(form.password.data):
-            app.logger.debug('user not found or invalid password. User is ' + (user.username if user else '<None>'))
+            app.logger.debug('user not found or invalid password. User is ' + 
+                             (user.username if user else '<None>'))
             flash('invalid credentials')
             return redirect(url_for('index'))
         else:
