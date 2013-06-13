@@ -257,6 +257,32 @@ class TagblogTestCase(unittest.TestCase):
         assert 'title1' not in rv.data
         assert 'body1' not in rv.data
 
+    def test_blogpost_delete(self):
+        # Let's add some posts
+        first = tagblog.Tag('First')
+        second = tagblog.Tag('second')
+        third = tagblog.Tag('third')
+        not_first = tagblog.Tag('not first')
+        last = tagblog.Tag('last')
+        post1 = tagblog.Blogpost('title1','body1',[first])
+        post2 = tagblog.Blogpost('title2','body2',[second, not_first])
+        post3 = tagblog.Blogpost('title3','body3',[third, not_first, last])
+        tagblog.db.session.add_all([post1, post2, post3])
+        tagblog.db.session.commit()
+        assert tagblog.Blogpost.query.count() == 3
+        tagblog.db.session.add(post1)
+        self.app.post('/deletepost',data={
+                            'postid':post1.id
+                            })
+        assert tagblog.Blogpost.query.count() == 3
+        self.login('admin', 'default')        
+        self.app.post('/deletepost',data={
+                            'postid':post1.id
+                            })
+        assert tagblog.Blogpost.query.count() == 2
+        assert tagblog.Blogpost.query.get(post1.id) == None
+       
+
 
 if __name__ == '__main__':
     unittest.main()
