@@ -184,8 +184,12 @@ class BlogpostForm(Form):
         Other arguments are passed to parent class's constructor.
 
         """
-        super(BlogpostForm, self)
-            .__init__(formdata=formdata, obj=obj, prefix=prefix, **kwargs)
+        super(BlogpostForm, self).__init__(
+            formdata=formdata, 
+            obj=obj, 
+            prefix=prefix, 
+            **kwargs
+            )
         self.post_init()
         if post:
             self.id.data = post.id
@@ -252,9 +256,11 @@ def index(page=1):
 def search():
     """Page for searching posts"""
     try:
-        queryString = request.values['query']
-        .replace('/','//').replace('%','/%')
-        .replace('_','/_')
+        queryString = (
+            request.values['query']
+            .replace('/','//').replace('%','/%')
+            .replace('_','/_')
+        )
     except KeyError:
         flash('Search query not present')
         return redirect_next_or_index()
