@@ -3,16 +3,16 @@ import os
 
 from flask import (Flask, render_template, Markup, 
                     abort, redirect, url_for, request, flash)
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask.ext.wtf import Form
 from flask.ext.login import (LoginManager, current_user, login_required,
                             login_user, logout_user, UserMixin, AnonymousUser)
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask.ext.wtf import Form
+from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
-from wtforms.ext.sqlalchemy.orm import model_form
-from wtforms.validators import DataRequired, Length
+from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms import (TextField, PasswordField, TextAreaField, 
                     SelectMultipleField, HiddenField, FieldList, FormField)
+from wtforms.ext.sqlalchemy.orm import model_form
+from wtforms.validators import DataRequired, Length
 
 app = Flask(__name__)
 # Get setting from file specified in enviroment variables or default file.
