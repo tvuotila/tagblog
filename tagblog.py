@@ -1,7 +1,7 @@
 import math
 import os
 from flask import (Flask, render_template, Markup, 
-    abort, redirect, url_for, request, flash)
+                    abort, redirect, url_for, request, flash)
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import (LoginManager, current_user, login_required,
                             login_user, logout_user, UserMixin, AnonymousUser)
@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from wtforms.ext.sqlalchemy.orm import model_form
 from wtforms.validators import DataRequired, Length
 from wtforms import (TextField, PasswordField, TextAreaField, 
-    SelectMultipleField, HiddenField, FieldList, FormField)
+                    SelectMultipleField, HiddenField, FieldList, FormField)
 
 app = Flask(__name__)
 # Get setting from file specified in enviroment variables or default file.
