@@ -14,6 +14,7 @@ from wtforms import (TextField, PasswordField, TextAreaField,
 from wtforms.ext.sqlalchemy.orm import model_form
 from wtforms.validators import DataRequired, Length
 
+
 app = Flask(__name__)
 # Get setting from file specified in enviroment variables or default file.
 # This way we can change settings while testing.
