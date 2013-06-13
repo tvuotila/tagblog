@@ -46,13 +46,16 @@
               <li id="addpost"><a href="#">Add new post</a></li>
               {% endif %}
               <li>
-                <form style="padding-left: 10px;" class="navbar-search pull-left" action="{{ url_for('search') }}">
-                  <input name="query" class="search-query" type="text" placeholder="Search">
-                </form>
+                <div>
+                  <form style="padding-left: 10px;" class="navbar-form pull-left" action="{{ url_for('search') }}">
+                      <input name="query" class="search-query" type="text" placeholder="Type here&hellip;"/>
+                      <button type="submit" class="btn">Search</button>
+                  </form>
+                </div>
               </li>
             </ul>
             {% if current_user.is_authenticated() %}
-            <div class="pull-right navbar-text">Hello {{current_user.username }} <a href="{{ url_for('logout', next=request.path) }}">Logout</a></div>
+            <div class="pull-right navbar-text">Hello, {{current_user.username }}&nbsp;&nbsp;<a href="{{ url_for('logout', next=request.path) }}">Logout</a></div>
             {% else %}
             <form class="navbar-form pull-right" action="{{ url_for('login') }}" method="post">
               {{ loginform.csrf_token }}
@@ -92,6 +95,8 @@
                 {{ addpostform.body.label }}
                 {{ addpostform.body }}
                 {{ addpostform.tags.label }}
+                Ctrl + click to select multiple tags.
+                <br/>
                 {{ addpostform.tags }}
             </div>
             <div class="modal-footer">
