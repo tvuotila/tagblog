@@ -1,5 +1,6 @@
 import math
 import os
+
 from flask import (Flask, render_template, Markup, 
                     abort, redirect, url_for, request, flash)
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -22,6 +23,7 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "index"
+
 
 class User(db.Model):
     """Model for user of tagblog website."""
@@ -81,11 +83,13 @@ class User(db.Model):
         """
         return True
 
+
 # Helper table for tag-blogpost relationship
 tagsTable = db.Table('tags',
     db.Column('tag_id', db.Integer, db.ForeignKey('tag.id')),
     db.Column('blogpost_id', db.Integer, db.ForeignKey('blogpost.id'))
     )
+
 
 class Tag(db.Model):
     """Model for tags"""
@@ -97,6 +101,7 @@ class Tag(db.Model):
 
     def __str__(self):
         return '<Tag: ' + str(self.name) + '>'
+
 
 class Blogpost(db.Model):
     """Model for blogpost.
@@ -128,8 +133,10 @@ class Blogpost(db.Model):
         """Add new tag to post."""
         self.tags.append(tag)
 
+
 # Create database
 db.create_all()
+
 
 @login_manager.user_loader
 def load_user(userid):
@@ -144,12 +151,14 @@ def load_user(userid):
     except Exception, e:
         return None
 
+
 class LoginForm(Form):
     """Form for logging in a user."""
     username = TextField(label=u'username', description=u'username', 
                          validators=[DataRequired(), Length(max=80)])
     password = PasswordField(label=u'password', description=u'password', 
                              validators=[DataRequired()])
+
 
 class BlogpostForm(Form):
     """Form for inputing blog post info."""
@@ -188,14 +197,17 @@ class BlogpostForm(Form):
         self.tags.choices = [(t.id, t.name) 
                             for t in Tag.query.order_by('name').all()]
 
+
 class SingleTagForm(Form):
     """Form for inputting tag info for a tag."""
     id = HiddenField()
     name = TextField('Tag', validators=[DataRequired()])
 
+
 class TagForm(Form):
     """Form for inputting tag info for multiple tags."""
     tags = FieldList(FormField(SingleTagForm))
+
 
 def redirect_next_or_index():
     """
@@ -218,6 +230,7 @@ def redirect_next_or_index():
     # fall-back
     return redirect(url_for('index'))
 
+
 @app.route('/<page>')
 @app.route('/')
 def index(page=1):
@@ -232,6 +245,7 @@ def index(page=1):
                             page=page, 
                             loginform=LoginForm(), 
                             addpostform=BlogpostForm())
+
 
 @app.route('/search')
 def search():
@@ -275,6 +289,7 @@ def search():
                             page=page, 
                             loginform=LoginForm(), 
                             addpostform=BlogpostForm())
+
 
 @app.route('/edittags', methods=('GET', 'POST'))
 @login_required
@@ -350,6 +365,7 @@ def edittags():
     flash('Internal error')
     return redirect_next_or_index()
 
+
 @app.route('/addpost', methods=('GET', 'POST'))
 @login_required
 def addpost():
@@ -370,6 +386,7 @@ def addpost():
         app.logger.warning(str(e))
     flash('Internal error')
     return redirect_next_or_index()
+
 
 @app.route('/editpost', methods=('GET', 'POST'))
 @login_required
@@ -398,6 +415,7 @@ def editpost():
     flash('Internal error')
     return redirect_next_or_index()
 
+
 @app.route('/deletepost', methods=('GET', 'POST'))
 @login_required
 def deletepost():
@@ -411,6 +429,7 @@ def deletepost():
     db.session.commit()
     flash('Deleted the post')
     return redirect_next_or_index()
+
 
 @app.route('/post/<id>')
 def post(id):
@@ -432,6 +451,7 @@ def post(id):
     except Exception, e:
         app.logger.warning(str(e))
     return redirect_next_or_index()
+
 
 @app.route('/login', methods=('GET', 'POST'))
 def login():
@@ -455,12 +475,14 @@ def login():
         flash(error)
     return redirect_next_or_index()
 
+
 @app.route('/logout')
 @login_required
 def logout():
     """Logout current user."""
     logout_user()
     return redirect_next_or_index()
+
 
 if __name__ == '__main__':
     app.run(debug=True)
