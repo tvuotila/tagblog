@@ -247,15 +247,15 @@ class TagblogTestCase(unittest.TestCase):
         assert 'Tags:' in rv.data
         assert 'title2' in rv.data
         assert 'body2' in rv.data
+        assert 'First' in rv.data
         assert 'second' in rv.data
+        assert 'third' in rv.data
+        assert 'last' in rv.data
         assert 'not first' in rv.data
         assert 'title3' in rv.data
         assert 'body3' in rv.data
-        assert 'third' in rv.data
-        assert 'last' in rv.data
         assert 'title1' not in rv.data
         assert 'body1' not in rv.data
-        assert 'First' not in rv.data
 
 
 if __name__ == '__main__':
